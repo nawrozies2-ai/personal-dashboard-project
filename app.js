@@ -10,12 +10,14 @@ function createProfileManager() {
     return {
 
         updateProfile(name, email, color) {
+
             profile.name = name;
             profile.email = email;
             profile.color = color;
         },
 
         getProfile() {
+
             return profile;
         }
     };
@@ -24,7 +26,10 @@ function createProfileManager() {
 const profileManager = createProfileManager();
 
 
+// ------------------------------
 // FORM HANDLING + VALIDATION
+// ------------------------------
+
 document.getElementById("profileForm").addEventListener("submit", function(e) {
 
     e.preventDefault();
@@ -34,11 +39,13 @@ document.getElementById("profileForm").addEventListener("submit", function(e) {
     const color = document.getElementById("color").value;
 
     if (name === "") {
+
         alert("Please enter your name");
         return;
     }
 
     if (!email.includes("@")) {
+
         alert("Please enter a valid email");
         return;
     }
@@ -47,14 +54,19 @@ document.getElementById("profileForm").addEventListener("submit", function(e) {
 
     const updatedProfile = profileManager.getProfile();
 
-    document.getElementById("display-name").textContent = updatedProfile.name;
-    document.getElementById("display-email").textContent = updatedProfile.email;
-    document.getElementById("display-color").textContent = updatedProfile.color;
+    document.getElementById("display-name").textContent =
+        updatedProfile.name;
+
+    document.getElementById("display-email").textContent =
+        updatedProfile.email;
+
+    document.getElementById("display-color").textContent =
+        updatedProfile.color;
 });
 
 
 // ------------------------------
-// TASK LIST (ARRAY OF OBJECTS)
+// TASK LIST
 // ------------------------------
 
 let tasks = [];
@@ -65,18 +77,22 @@ function renderTasks(taskArray) {
 
     taskList.innerHTML = "";
 
-    taskArray.map(task => {
+    taskArray.forEach(task => {
 
         const li = document.createElement("li");
 
         li.textContent = task.text;
 
+        // Toggle completed status
         li.onclick = () => {
+
             task.completed = !task.completed;
+
             renderTasks(tasks);
         };
 
         if (task.completed) {
+
             li.style.textDecoration = "line-through";
         }
 
@@ -85,12 +101,16 @@ function renderTasks(taskArray) {
 }
 
 
-// ADD TASK
-document.getElementById("addTaskBtn").addEventListener("click", () => {
+// ------------------------------
+// ADD TASK + SAVE TO EXPRESS API
+// ------------------------------
+
+document.getElementById("addTaskBtn").addEventListener("click", async () => {
 
     const taskInput = document.getElementById("taskInput");
 
     if (taskInput.value.trim() === "") {
+
         alert("Please enter a task");
         return;
     }
@@ -105,6 +125,29 @@ document.getElementById("addTaskBtn").addEventListener("click", () => {
 
     renderTasks(tasks);
 
+    // SAVE TASK TO BACKEND
+    try {
+
+        await fetch("https://personal-dashboard-project.onrender.com/api/items", {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                text: taskInput.value
+            })
+        });
+
+        console.log("Task saved to backend");
+
+    } catch (error) {
+
+        console.error("Failed to save task:", error);
+    }
+
     taskInput.value = "";
 
     // JSON conversion simulation
@@ -116,7 +159,10 @@ document.getElementById("addTaskBtn").addEventListener("click", () => {
 });
 
 
+// ------------------------------
 // SORT TASKS
+// ------------------------------
+
 document.getElementById("sortTasks").addEventListener("click", () => {
 
     tasks.sort((a, b) => a.text.localeCompare(b.text));
@@ -125,81 +171,104 @@ document.getElementById("sortTasks").addEventListener("click", () => {
 });
 
 
-// FILTER COMPLETED
+// ------------------------------
+// FILTER COMPLETED TASKS
+// ------------------------------
+
 document.getElementById("showCompleted").addEventListener("click", () => {
 
-    const completed = tasks.filter(task => task.completed);
+    const completedTasks = tasks.filter(task => task.completed);
 
-    renderTasks(completed);
+    renderTasks(completedTasks);
 });
 
 
-// SHOW ALL
+// ------------------------------
+// SHOW ALL TASKS
+// ------------------------------
+
 document.getElementById("showAll").addEventListener("click", () => {
 
     renderTasks(tasks);
 });
 
+
+// ------------------------------
+// EXPRESS API FETCHING
+// ------------------------------
+
 const apiList = document.getElementById("apiDataList");
 const statusMessage = document.getElementById("statusMessage");
 
-// FETCH USERS
-async function fetchUsers() {
+
+// FETCH ITEMS FROM EXPRESS BACKEND
+async function fetchItems() {
 
     statusMessage.textContent = "Loading data...";
+
     apiList.innerHTML = "";
 
     try {
-        const response = await fetch("https://jsonplaceholder.typicode.com/users");
+
+        const response = await fetch(
+            "https://personal-dashboard-project.onrender.com/api/items"
+        );
 
         if (!response.ok) {
+
             throw new Error("Failed to fetch data");
         }
 
         const data = await response.json();
 
         if (data.length === 0) {
-            statusMessage.textContent = "No results found";
+
+            statusMessage.textContent = "No items found";
+
             return;
         }
 
         statusMessage.textContent = "";
 
-        displayUsers(data);
+        displayItems(data);
 
     } catch (error) {
-        statusMessage.textContent = "Error loading data. Please try again.";
+
+        statusMessage.textContent =
+            "Server connection failed. Please try again.";
+
         console.error(error);
     }
 }
 
-function displayUsers(users) {
+
+// ------------------------------
+// DISPLAY ITEMS
+// ------------------------------
+
+function displayItems(items) {
 
     apiList.innerHTML = "";
 
-    users.forEach(user => {
+    items.forEach(item => {
 
         const li = document.createElement("li");
 
         li.innerHTML = `
-            <strong>${user.name}</strong>
-            <button class="details-btn">See Details</button>
-            <div class="details" style="display:none;">
-                Email: ${user.email} <br>
-                Company: ${user.company.name}
-            </div>
+            <strong>${item.text}</strong>
+            <p>Status: ${item.completed ? "Completed" : "Pending"}</p>
         `;
-
-        // TOGGLE DETAILS
-        li.querySelector(".details-btn").addEventListener("click", () => {
-            const details = li.querySelector(".details");
-
-            details.style.display =
-                details.style.display === "none" ? "block" : "none";
-        });
 
         apiList.appendChild(li);
     });
 }
 
-document.getElementById("loadUsers").addEventListener("click", fetchUsers);
+
+// ------------------------------
+// LOAD DATA BUTTON
+// ------------------------------
+
+document.getElementById("loadUsers").addEventListener(
+    "click",
+    fetchItems
+);

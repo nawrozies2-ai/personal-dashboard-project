@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
+
 require("dotenv").config();
 
 const app = express();
@@ -12,9 +14,15 @@ app.use(express.json());
 
 // SIMPLE LOGGING MIDDLEWARE
 app.use((req, res, next) => {
+
     console.log(`${req.method} request to ${req.url}`);
+
     next();
 });
+
+
+// SERVE FRONTEND FILES
+app.use(express.static(path.join(__dirname)));
 
 
 // SAMPLE DATABASE
@@ -34,6 +42,7 @@ let items = [
 
 // GET ROUTE
 app.get("/api/items", (req, res) => {
+
     res.json(items);
 });
 
@@ -53,6 +62,8 @@ app.post("/api/items", (req, res) => {
 });
 
 
+// START SERVER
 app.listen(PORT, () => {
+
     console.log(`Server running on port ${PORT}`);
 });
